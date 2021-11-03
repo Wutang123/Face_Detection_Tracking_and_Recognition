@@ -1,0 +1,15 @@
+#######################################################################
+Project 3: Face Detection Tracking and Recognition
+
+Training
+python .\train.py --img 640 --batch 16 --workers 4 --epoch 50 --data .\data\Justin\data.yaml --weights ' ' --cfg .\models\yolov5s.yaml
+
+python val.py --data .\data\Justin\data.yaml --weights .\runs\train\exp\weights\best.pt --img 640
+
+detect.py --source 0 --weights .\runs\train\exp\weights\best.pt --img 640
+
+
+
+
+
+#######################################################################
