@@ -226,11 +226,14 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
                             save_one_box(xyxy, imc, file=save_dir / 'crops' / names[c] / f'{p.stem}.jpg', BGR=True)
 
             # Print time (inference-only)
-            LOGGER.info(f'{s}Done. ({t3 - t2:.3f}s)')
+            LOGGER.info(f'{s}Done. ({t3 - t2:.3f}s @ {int(1/(t3 - t2))} FPS)')
 
             # Stream results
             im0 = annotator.result()
             if view_img:
+                font = cv2.FONT_HERSHEY_SIMPLEX
+                fps = str(int(1/(t3 - t2)))
+                cv2.putText(im0, fps, (5, 50), font, 2, (100, 255, 0), 2, cv2.LINE_AA)
                 cv2.imshow(str(p), im0)
                 cv2.waitKey(1)  # 1 millisecond
 

@@ -1,15 +1,156 @@
 #######################################################################
+//=====================================================================
 Project 3: Face Detection Tracking and Recognition
 
+Due Dates:
+    - Intermediate Presentation: 11/9/21
+    - Final Presentation:        12/2/21
+
+Task:
+    - Detect, track and recognize your face in the live video.
+    - Detect, track and recognize a second person’s face.
+    - Simultaneously detect, track and recognize both multiple faces.
+    - Design your system so that the results of the live demo can be shown via zoom during class.
+
+Questions:
+- Determine the full field of view of your camera, and the angular resolution of the pixels?
+- How far from the camera can your system accurately recognize your face?
+- At the farthest distance (where recognition is consistently possible) what is the number of pixels across the face (both vertically and horizontally) ?
+- What is the accuracy of the model on the training data? What is the accuracy estimated during test as a function of distance from your camera?
+- What is the power, temperature, and resource utilization of the processing during operation ?
+//=====================================================================
+
 Training
-python .\train.py --img 640 --batch 16 --workers 4 --epoch 50 --data .\data\Justin\data.yaml --weights ' ' --cfg .\models\yolov5s.yaml
+(pretrained) python .\train.py --img 640 --batch 16 --workers 2 --epoch 200 --data .\data\justin_carlos\data.yaml --weights weights\yolov5s.pt
+(scratch) python .\train.py --img 640 --batch 16 --workers 2 --epoch 200 --data .\data\justin_carlos\data.yaml --weights ' ' --cfg .\models\yolov5s.yaml
 
-python val.py --data .\data\Justin\data.yaml --weights .\runs\train\exp\weights\best.pt --img 640
+(pretrained) python .\train.py --img 640 --batch 16 --workers 2 --epoch 200 --data .\data\justin_carlos_mosiac\data.yaml --weights weights\yolov5s.pt
+(scratch) python .\train.py --img 640 --batch 16 --workers 2 --epoch 200 --data .\data\justin_carlos_mosiac\data.yaml --weights ' ' --cfg .\models\yolov5s.yaml
 
-detect.py --source 0 --weights .\runs\train\exp\weights\best.pt --img 640
+Testing
+python val.py --data .\data\Justin\data.yaml --weights weights\Justin_exp_best.pt --img 640
 
+Detection
+python detect.py --source 0 --weights weights\Justin_exp_best.pt --img 640
 
-
-
-
+Tracker
+python .\yolov5demo.py <video file> --detector path  weights\Justin_exp2_best.pt --img 640
+----------------------------------------------------------------------
+DATA COLLECTION:
+*****
+Runs/train/exp - yolov5s pretrained - Justin and Carlos Images
+200 epochs completed in 0.164 hours.
+Optimizer stripped from runs\train\exp\weights\last.pt, 14.5MB
+Optimizer stripped from runs\train\exp\weights\best.pt, 14.5MB
+Validating runs\train\exp\weights\best.pt...
+Fusing layers...
+Model Summary: 213 layers, 7015519 parameters, 0 gradients, 15.8 GFLOPs
+               Class     Images     Labels          P          R     mAP@.5 mAP@.5:.95: 100%|██████████████████████████████████████████████████████████████████████████████████████| 2/2 [00:00<00:00,  3.15it/s]
+                 all         60         60      0.977       0.95       0.98      0.759
+              Carlos         60         30       0.99          1      0.995      0.867
+              Justin         60         30      0.964        0.9      0.964       0.65
+*****
+Runs/train/exp2 - yolov5s scratch - Justin and Carlos Images
+270 layers, 7022326 parameters, 7022326 gradients, 15.8 GFLOPs
+200 epochs completed in 0.165 hours.
+Optimizer stripped from runs\train\exp2\weights\last.pt, 14.5MB
+Optimizer stripped from runs\train\exp2\weights\best.pt, 14.5MB
+Validating runs\train\exp2\weights\best.pt...
+Fusing layers...
+Model Summary: 213 layers, 7015519 parameters, 0 gradients, 15.8 GFLOPs
+               Class     Images     Labels          P          R     mAP@.5 mAP@.5:.95: 100%|██████████████████████████████████████████████████████████████████████████████████████| 2/2 [00:00<00:00,  2.50it/s]
+                 all         60         60      0.897      0.937      0.941      0.675
+              Carlos         60         30          1      0.973      0.995      0.788
+              Justin         60         30      0.794        0.9      0.887      0.561
+*****
+Runs/train/exp3 - yolov5m pretrained - Justin and Carlos Images
+391 layers, 21056406 parameters, 21056406 gradients, 50.1 GFLOPs
+200 epochs completed in 0.337 hours.
+Optimizer stripped from runs\train\exp3\weights\last.pt, 42.6MB
+Optimizer stripped from runs\train\exp3\weights\best.pt, 42.6MB
+Validating runs\train\exp3\weights\best.pt...
+Fusing layers...
+Model Summary: 308 layers, 21041679 parameters, 0 gradients, 50.3 GFLOPs
+               Class     Images     Labels          P          R     mAP@.5 mAP@.5:.95: 100%|██████████████████████████████████████████████████████████████████████████████████████| 2/2 [00:00<00:00,  2.49it/s]
+                 all         60         60      0.983      0.971      0.988      0.781
+              Carlos         60         30          1      0.975      0.995      0.848
+              Justin         60         30      0.966      0.967      0.981      0.714
+*****
+Runs/train/exp4 - yolov5m scratch - Justin and Carlos Images
+391 layers, 21056406 parameters, 21056406 gradients, 50.1 GFLOPs
+200 epochs completed in 0.323 hours.
+Optimizer stripped from runs\train\exp4\weights\last.pt, 42.2MB
+Optimizer stripped from runs\train\exp4\weights\best.pt, 42.2MB
+Validating runs\train\exp4\weights\best.pt...
+Fusing layers...
+Model Summary: 290 layers, 20856975 parameters, 0 gradients, 48.0 GFLOPs
+               Class     Images     Labels          P          R     mAP@.5 mAP@.5:.95: 100%|██████████████████████████████████████████████████████████████████████████████████████| 2/2 [00:00<00:00,  2.20it/s]
+                 all         60         60      0.892      0.967      0.967      0.686
+              Carlos         60         30      0.961          1      0.995      0.798
+              Justin         60         30      0.823      0.933      0.938      0.575
+*****
+Runs/train/exp5 - yolov5l pretrained - Justin and Carlos Images
+499 layers, 46636735 parameters, 46636735 gradients, 114.3 GFLOPs
+200 epochs completed in 0.492 hours.
+Optimizer stripped from runs\train\exp5\weights\last.pt, 93.9MB
+Optimizer stripped from runs\train\exp5\weights\best.pt, 93.9MB
+Validating runs\train\exp5\weights\best.pt...
+Fusing layers...
+Model Summary: 392 layers, 46605951 parameters, 0 gradients, 114.1 GFLOPs
+               Class     Images     Labels          P          R     mAP@.5 mAP@.5:.95: 100%|██████████████████████████████████████████████████████████████████████████████████████| 4/4 [00:01<00:00,  2.75it/s]
+                 all         60         60      0.964      0.967      0.975      0.765
+              Carlos         60         30          1          1      0.995       0.87
+              Justin         60         30      0.928      0.933      0.955       0.66
+*****
+Runs/train/exp6 - yolov5l scratch - Justin and Carlos Images
+499 layers, 46636735 parameters, 46636735 gradients, 114.3 GFLOPs
+200 epochs completed in 0.474 hours.
+Optimizer stripped from runs\train\exp6\weights\last.pt, 92.9MB
+Optimizer stripped from runs\train\exp6\weights\best.pt, 92.9MB
+Validating runs\train\exp8\weights\best.pt...
+Fusing layers...
+Model Summary: 367 layers, 46113663 parameters, 0 gradients, 107.8 GFLOPs
+               Class     Images     Labels          P          R     mAP@.5 mAP@.5:.95: 100%|██████████████████████████████████████████████████████████████████████████████████████| 4/4 [00:01<00:00,  2.53it/s]
+                 all         60         60      0.977      0.833      0.924      0.659
+              Carlos         60         30      0.999      0.967       0.98      0.739
+              Justin         60         30      0.954        0.7      0.868      0.578
+*****
+Runs/train/exp7 - yolov5s pretrained - Justin and Carlos Mosaic Images
+270 layers, 7022326 parameters, 7022326 gradients, 15.8 GFLOPs
+200 epochs completed in 0.133 hours.
+Optimizer stripped from runs\train\exp7\weights\last.pt, 14.5MB
+Optimizer stripped from runs\train\exp7\weights\best.pt, 14.5MB
+Validating runs\train\exp7\weights\best.pt...
+Fusing layers...
+Model Summary: 213 layers, 7015519 parameters, 0 gradients, 15.8 GFLOPs
+               Class     Images     Labels          P          R     mAP@.5 mAP@.5:.95: 100%|██████████████████████████████████████████████████████████████████████████████████████| 2/2 [00:00<00:00,  2.98it/s]
+                 all         60         60      0.964      0.933      0.981        0.8
+              Carlos         60         30      0.999          1      0.995      0.865
+              Justin         60         30      0.928      0.867      0.966      0.735
+*****
+Runs/train/exp8 - yolov5m pretrained - Justin and Carlos Mosaic Images
+391 layers, 21056406 parameters, 21056406 gradients, 50.1 GFLOPs
+200 epochs completed in 0.275 hours.
+Optimizer stripped from runs\train\exp8\weights\last.pt, 42.6MB
+Optimizer stripped from runs\train\exp8\weights\best.pt, 42.6MB
+Validating runs\train\exp8\weights\best.pt...
+Fusing layers...
+Model Summary: 308 layers, 21041679 parameters, 0 gradients, 50.3 GFLOPs
+               Class     Images     Labels          P          R     mAP@.5 mAP@.5:.95: 100%|██████████████████████████████████████████████████████████████████████████████████████| 2/2 [00:00<00:00,  2.34it/s]
+                 all         60         60      0.946          1      0.989      0.825
+              Carlos         60         30      0.983          1      0.995      0.877
+              Justin         60         30      0.909          1      0.982      0.773
+*****
+Runs/train/exp8 - yolov5l pretrained - Justin and Carlos Mosaic Images
+499 layers, 46636735 parameters, 46636735 gradients, 114.3 GFLOPs
+200 epochs completed in 0.402 hours.
+Optimizer stripped from runs\train\exp9\weights\last.pt, 93.9MB
+Optimizer stripped from runs\train\exp9\weights\best.pt, 93.9MB
+Validating runs\train\exp9\weights\best.pt...
+Fusing layers...
+Model Summary: 392 layers, 46605951 parameters, 0 gradients, 114.1 GFLOPs
+               Class     Images     Labels          P          R     mAP@.5 mAP@.5:.95: 100%|██████████████████████████████████████████████████████████████████████████████████████| 4/4 [00:01<00:00,  2.74it/s]
+                 all         60         60      0.982      0.967      0.988      0.816
+              Carlos         60         30      0.999          1      0.995      0.857
+              Justin         60         30      0.965      0.933      0.982      0.775
 #######################################################################

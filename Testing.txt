@@ -1,0 +1,24 @@
+#######################################################################
+//=====================================================================
+Project 3: Face Detection Tracking and Recognition
+
+Due Dates:
+    - Intermediate Presentation: 11/9/21
+    - Final Presentation:        12/2/21
+
+Task:
+    - Detect, track and recognize your face in the live video.
+    - Detect, track and recognize a second person’s face.
+    - Simultaneously detect, track and recognize both multiple faces.
+    - Design your system so that the results of the live demo can be shown via zoom during class.
+
+Questions:
+- Determine the full field of view of your camera, and the angular resolution of the pixels?
+- How far from the camera can your system accurately recognize your face?
+- At the farthest distance (where recognition is consistently possible) what is the number of pixels across the face (both vertically and horizontally) ?
+- What is the accuracy of the model on the training data? What is the accuracy estimated during test as a function of distance from your camera?
+- What is the power, temperature, and resource utilization of the processing during operation ?
+//=====================================================================
+
+
+#######################################################################
