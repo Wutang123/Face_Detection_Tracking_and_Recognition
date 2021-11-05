@@ -240,6 +240,9 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
             # Save results (image with detections)
             if save_img:
                 if dataset.mode == 'image':
+                    font = cv2.FONT_HERSHEY_SIMPLEX
+                    fps = str(int(1/(t3 - t2)))
+                    cv2.putText(im0, fps, (5, 50), font, 2, (100, 255, 0), 2, cv2.LINE_AA)
                     cv2.imwrite(save_path, im0)
                 else:  # 'video' or 'stream'
                     if vid_path[i] != save_path:  # new video
@@ -254,6 +257,9 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
                             fps, w, h = 30, im0.shape[1], im0.shape[0]
                             save_path += '.mp4'
                         vid_writer[i] = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (w, h))
+                    font = cv2.FONT_HERSHEY_SIMPLEX
+                    fps_1 = str(int(1/(t3 - t2)))
+                    cv2.putText(im0, fps_1, (5, 50), font, 2, (100, 255, 0), 2, cv2.LINE_AA)
                     vid_writer[i].write(im0)
 
     # Print results

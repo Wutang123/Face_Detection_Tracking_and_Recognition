@@ -28,10 +28,18 @@ Training
 (scratch) python .\train.py --img 640 --batch 16 --workers 2 --epoch 200 --data .\data\justin_carlos_mosiac\data.yaml --weights ' ' --cfg .\models\yolov5s.yaml
 
 Testing
-python val.py --data .\data\Justin\data.yaml --weights weights\Justin_exp_best.pt --img 640
+python val.py --data .\data\justin_carlos_mosaic\data.yaml --weights weights\justin_carlos_mosaic_exp7_best.pt --img 640
+python val.py --data .\data\justin_carlos_mosaic\data.yaml --weights weights\justin_carlos_mosaic_exp8_best.pt --img 640
+python val.py --data .\data\justin_carlos_mosaic\data.yaml --weights weights\justin_carlos_mosaic_exp9_best.pt --img 640
 
 Detection
-python detect.py --source 0 --weights weights\Justin_exp_best.pt --img 640
+python detect.py --source 0 --weights weights\justin_carlos_mosaic_exp7_best.pt --img 640
+python detect.py --source 0 --weights weights\justin_carlos_mosaic_exp8_best.pt --img 640
+python detect.py --source 0 --weights weights\justin_carlos_mosaic_exp9_best.pt --img 640
+
+python detect.py --source data\test.mp4 --weights weights\justin_carlos_mosaic_exp7_best.pt --img 640
+python detect.py --source data\test.mp4 --weights weights\justin_carlos_mosaic_exp8_best.pt --img 640
+python detect.py --source data\test.mp4 --weights weights\justin_carlos_mosaic_exp9_best.pt --img 640
 
 Tracker
 python .\yolov5demo.py <video file> --detector path  weights\Justin_exp2_best.pt --img 640
