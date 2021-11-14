@@ -120,11 +120,11 @@ Results saved to runs/detect/exp4
 ----------------------------------------------------------------------
 Tracking DATA COLLECTION:
 Model 2:
-Speed: 1.6ms pre-process, 105.9ms inference, 5.2ms NMS per image at shape (1, 3, 640, 640)
+Speed: 1.5ms pre-process, 105.9ms inference, 3.9ms NMS per image at shape (1, 3, 640, 640)
 Results saved to runs/track/exp
 
 Model 2 (half):
-Speed: 3.4ms pre-process, 66.2ms inference, 4.5ms NMS per image at shape (1, 3, 640, 640)
+Speed: 1.6ms pre-process, 65.3ms inference, 2.9ms NMS per image at shape (1, 3, 640, 640)
 Results saved to runs/track/exp2
 
 #######################################################################

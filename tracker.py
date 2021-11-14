@@ -61,7 +61,7 @@ import skimage
 from sort.sort import Sort
 
 
-def draw_boxes(img, bbox, categories=None, names=None, color=None):
+def draw_boxes(img, bbox, categories=None, names=None, color=None, conf=None):
     offset=(0, 0)
     for i, box in enumerate(bbox):
         x1, y1, x2, y2 = [int(i) for i in box]
@@ -69,10 +69,12 @@ def draw_boxes(img, bbox, categories=None, names=None, color=None):
         x2 += offset[0]
         y1 += offset[1]
         y2 += offset[1]
+        box_width = abs(x2 - x1)
+        box_height = abs(y2 - y1)
 
         # box text and bar
         cat = int(categories[i]) if categories is not None else 0
-        label = f'{names[cat]}'
+        label = f'{names[cat]}({conf:.2f}) {box_width} x {box_height}'
         t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 2, 2)[0]
         cv2.rectangle(img, (x1, y1), (x2, y2), color, 3)
         cv2.rectangle(img, (x1, y1), (x1 + t_size[0] + 3, y1 + t_size[1] + 4), color, -1)
@@ -294,7 +296,7 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
                         bbox_xyxy = tracked_dets[:,:4]
                         categories = tracked_dets[:, 4]
                         color=colors(c, True)
-                        draw_boxes(im0, bbox_xyxy, categories, names, color)
+                        draw_boxes(im0, bbox_xyxy, categories, names, color, conf)
 
                         # annotator.box_label(xyxy, label, color=colors(c, True))
                         if save_crop:
