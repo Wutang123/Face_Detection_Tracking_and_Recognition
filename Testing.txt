@@ -34,7 +34,7 @@ python3 detect.py --source data/test.mp4 --weights weights/justin_carlos_mosaic_
 python3 detect.py --source data/test.mp4 --weights weights/justin_carlos_mosaic_exp9_best.pt --img 640
 
 Tracker
-python .\yolov5demo.py <video file> --detector path  weights\Justin_exp2_best.pt --img 640
+
 //=====================================================================
 Baseline Xavier
 Temp (C):
@@ -46,7 +46,7 @@ Temp (C):
 Power(mW):
 	CPU, GPU, CV: 570 601
 	SOC: 693, 711
-	ALL: 2772, 2815 
+	ALL: 2772, 2815
 ----------------------------------------------------------------------
 Testing DATA COLLECTION:
 *****
