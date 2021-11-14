@@ -1,11 +1,11 @@
 """
     MINOR MODIFICATION FOR ClassySORT:
 
-    In the original implementation of SORT, 
-    it threw away the object classification category information 
+    In the original implementation of SORT,
+    it threw away the object classification category information
     For example, (0: person, 1: bike, etc.)
-    
-    I needed to keep that information for use in `Watchout`, 
+
+    I needed to keep that information for use in `Watchout`,
     so I added a `detclass` attribute to the `KalmanBoxTracker` object
     which stores YOLO detection object class information.
     With this modification, SORT returns data in the format:
@@ -15,7 +15,7 @@
 
     ==========================================================================
 
-    
+
     SORT: A Simple, Online and Realtime Tracker
     Copyright (C) 2016-2020 Alex Bewley alex@bewley.ai
 
@@ -37,8 +37,8 @@ from __future__ import print_function
 import os
 import numpy as np
 import matplotlib
-matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
+# matplotlib.use('TkAgg')
 import matplotlib.patches as patches
 from skimage import io
 
@@ -65,7 +65,7 @@ def iou_batch(bb_test, bb_gt):
     """
     bb_gt = np.expand_dims(bb_gt, 0)
     bb_test = np.expand_dims(bb_test, 1)
-    
+
     xx1 = np.maximum(bb_test[...,0], bb_gt[..., 0])
     yy1 = np.maximum(bb_test[..., 1], bb_gt[..., 1])
     xx2 = np.minimum(bb_test[..., 2], bb_gt[..., 2])
@@ -73,7 +73,7 @@ def iou_batch(bb_test, bb_gt):
     w = np.maximum(0., xx2 - xx1)
     h = np.maximum(0., yy2 - yy1)
     wh = w * h
-    o = wh / ((bb_test[..., 2] - bb_test[..., 0]) * (bb_test[..., 3] - bb_test[..., 1])                                      
+    o = wh / ((bb_test[..., 2] - bb_test[..., 0]) * (bb_test[..., 3] - bb_test[..., 1])
     + (bb_gt[..., 2] - bb_gt[..., 0]) * (bb_gt[..., 3] - bb_gt[..., 1]) - wh)
     return(o)
 
@@ -109,7 +109,7 @@ class KalmanBoxTracker(object):
     def __init__(self, bbox):
         """
         Initialize a tracker using initial bounding box
-        
+
         Parameter 'bbox' must have 'detected class' int number at the -1 position.
         """
         self.kf = KalmanFilter(dim_x=7, dim_z=4)
@@ -130,10 +130,10 @@ class KalmanBoxTracker(object):
         self.hits = 0
         self.hit_streak = 0
         self.age = 0
-        
+
         #keep yolov5 detected class information
         self.detclass = bbox[5]
-        
+
     def update(self, bbox):
         """
         Updates the state vector with observed bbox
@@ -144,7 +144,7 @@ class KalmanBoxTracker(object):
         self.hit_streak += 1
         self.kf.update(convert_bbox_to_z(bbox))
         self.detclass = bbox[5]
-        
+
     def predict(self):
         """
         Advances the state vector and returns the predicted bounding box estimate
@@ -158,7 +158,7 @@ class KalmanBoxTracker(object):
         self.time_since_update += 1
         self.history.append(convert_x_to_bbox(self.kf.x))
         return self.history[-1]
-    
+
     def get_state(self):
         """
         Returns the current bounding box estimate
@@ -169,26 +169,26 @@ class KalmanBoxTracker(object):
         np.concatenate((arr1,arr3), axis=1)
         """
         arr_detclass = np.expand_dims(np.array([self.detclass]), 0)
-        
+
         arr_u_dot = np.expand_dims(self.kf.x[4],0)
         arr_v_dot = np.expand_dims(self.kf.x[5],0)
         arr_s_dot = np.expand_dims(self.kf.x[6],0)
-        
+
         return np.concatenate((convert_x_to_bbox(self.kf.x), arr_detclass, arr_u_dot, arr_v_dot, arr_s_dot), axis=1)
-    
+
 def associate_detections_to_trackers(detections, trackers, iou_threshold = 0.3):
     """
     Assigns detections to tracked object (both represented as bounding boxes)
-    Returns 3 lists of 
+    Returns 3 lists of
     1. matches,
     2. unmatched_detections
     3. unmatched_trackers
     """
     if(len(trackers)==0):
         return np.empty((0,2),dtype=int), np.arange(len(detections)), np.empty((0,5),dtype=int)
-    
+
     iou_matrix = iou_batch(detections, trackers)
-    
+
     if min(iou_matrix.shape) > 0:
         a = (iou_matrix > iou_threshold).astype(np.int32)
         if a.sum(1).max() == 1 and a.sum(0).max() ==1:
@@ -197,17 +197,17 @@ def associate_detections_to_trackers(detections, trackers, iou_threshold = 0.3):
             matched_indices = linear_assignment(-iou_matrix)
     else:
         matched_indices = np.empty(shape=(0,2))
-    
+
     unmatched_detections = []
     for d, det in enumerate(detections):
         if(d not in matched_indices[:,0]):
             unmatched_detections.append(d)
-    
+
     unmatched_trackers = []
     for t, trk in enumerate(trackers):
         if(t not in matched_indices[:,1]):
             unmatched_trackers.append(t)
-    
+
     #filter out matched with low IOU
     matches = []
     for m in matched_indices:
@@ -216,14 +216,14 @@ def associate_detections_to_trackers(detections, trackers, iou_threshold = 0.3):
             unmatched_trackers.append(m[1])
         else:
             matches.append(m.reshape(1,2))
-    
+
     if(len(matches)==0):
         matches = np.empty((0,2), dtype=int)
     else:
         matches = np.concatenate(matches, axis=0)
-        
+
     return matches, np.array(unmatched_detections), np.array(unmatched_trackers)
-    
+
 
 class Sort(object):
     def __init__(self, max_age=1, min_hits=3, iou_threshold=0.3):
@@ -239,15 +239,15 @@ class Sort(object):
         """
         Parameters:
         'dets' - a numpy array of detection in the format [[x1, y1, x2, y2, score], [x1,y1,x2,y2,score],...]
-        
+
         Ensure to call this method even frame has no detections. (pass np.empty((0,5)))
-        
+
         Returns a similar array, where the last column is object ID (replacing confidence score)
-        
+
         NOTE: The number of objects returned may differ from the number of objects provided.
         """
         self.frame_count += 1
-        
+
         # Get predicted locations from existing trackers
         trks = np.zeros((len(self.trackers), 6))
         to_del = []
@@ -261,17 +261,17 @@ class Sort(object):
         for t in reversed(to_del):
             self.trackers.pop(t)
         matched, unmatched_dets, unmatched_trks = associate_detections_to_trackers(dets, trks, self.iou_threshold)
-        
+
         # Update matched trackers with assigned detections
         for m in matched:
             self.trackers[m[1]].update(dets[m[0], :])
-            
+
         # Create and initialize new trackers for unmatched detections
         for i in unmatched_dets:
             trk = KalmanBoxTracker(np.hstack((dets[i,:], np.array([0]))))
             #trk = KalmanBoxTracker(np.hstack(dets[i,:])
             self.trackers.append(trk)
-        
+
         i = len(self.trackers)
         for trk in reversed(self.trackers):
             d = trk.get_state()[0]
@@ -291,11 +291,11 @@ def parse_args():
     parser.add_argument('--display', dest='display', help='Display online tracker output (slow) [False]',action='store_true')
     parser.add_argument("--seq_path", help="Path to detections.", type=str, default='data')
     parser.add_argument("--phase", help="Subdirectory in seq_path.", type=str, default='train')
-    parser.add_argument("--max_age", 
-                        help="Maximum number of frames to keep alive a track without associated detections.", 
+    parser.add_argument("--max_age",
+                        help="Maximum number of frames to keep alive a track without associated detections.",
                         type=int, default=1)
-    parser.add_argument("--min_hits", 
-                        help="Minimum number of associated detections before track is initialised.", 
+    parser.add_argument("--min_hits",
+                        help="Minimum number of associated detections before track is initialised.",
                         type=int, default=3)
     parser.add_argument("--iou_threshold", help="Minimum IOU for match.", type=float, default=0.3)
     args = parser.parse_args()
@@ -321,12 +321,12 @@ if __name__ == '__main__':
         os.makedirs('output')
     pattern = os.path.join(args.seq_path, phase, '*', 'det', 'det.txt')
     for seq_dets_fn in glob.glob(pattern):
-        mot_tracker = Sort(max_age=args.max_age, 
+        mot_tracker = Sort(max_age=args.max_age,
                    min_hits=args.min_hits,
                    iou_threshold=args.iou_threshold) #create instance of the SORT tracker
     seq_dets = np.loadtxt(seq_dets_fn, delimiter=',')
     seq = seq_dets_fn[pattern.find('*'):].split(os.path.sep)[0]
-    
+
     with open(os.path.join('output', '%s.txt'%(seq)),'w') as out_file:
         print("Processing %s."%(seq))
         for frame in range(int(seq_dets[:,0].max())):
