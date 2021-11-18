@@ -1,9 +1,36 @@
-# YOLOv5 🚀 by Ultralytics, GPL-3.0 license
 """
-Run inference on images, videos, directories, streams, etc.
+    ClassySORT
 
-Usage:
-    $ python path/to/detect.py --source path/to/img.jpg --weights yolov5s.pt --img 640
+    YOLO v5(image segmentation) + vanilla SORT(multi-object tracker) implementation
+    that is aware of the tracked object category.
+
+    This is for people who want a real-time multiple object tracker (MOT)
+    that can track any kind of object with no additional training.
+
+    If you only need to track people, then I recommend YOLOv5 + DeepSORT implementations.
+    DeepSORT adds a separately trained neural network on top of SORT,
+    which increases accuracy for human detections but decreases performance slightly.
+
+
+    Copyright (C) 2020-2021 Jason Sohn tensorturtle@gmail.com
+
+
+    === start GNU License ===
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+    === end GNU License ===
 """
 
 import argparse
@@ -29,6 +56,30 @@ from utils.general import apply_classifier, check_img_size, check_imshow, check_
 from utils.plots import Annotator, colors
 from utils.torch_utils import load_classifier, select_device, time_sync
 
+#SORT
+import skimage
+from sort.sort import Sort
+
+
+def draw_boxes(img, bbox, categories=None, names=None, color=None, conf=None):
+    offset=(0, 0)
+    for i, box in enumerate(bbox):
+        x1, y1, x2, y2 = [int(i) for i in box]
+        x1 += offset[0]
+        x2 += offset[0]
+        y1 += offset[1]
+        y2 += offset[1]
+        box_width = abs(x2 - x1)
+        box_height = abs(y2 - y1)
+
+        # box text and bar
+        cat = int(categories[i]) if categories is not None else 0
+        label = f'{names[cat]}({conf:.2f}) {box_width} x {box_height}'
+        t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 2, 2)[0]
+        cv2.rectangle(img, (x1, y1), (x2, y2), color, 3)
+        cv2.rectangle(img, (x1, y1), (x1 + t_size[0] + 3, y1 + t_size[1] + 4), color, -1)
+        cv2.putText(img, label, (x1, y1 + t_size[1] + 4), cv2.FONT_HERSHEY_PLAIN, 2, [255, 255, 255], 2)
+    return img
 
 @torch.no_grad()
 def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
@@ -48,7 +99,7 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
         augment=False,  # augmented inference
         visualize=False,  # visualize features
         update=False,  # update all models
-        project=ROOT / 'runs/detect',  # save results to project/name
+        project=ROOT / 'runs/track',  # save results to project/name
         name='exp',  # save results to project/name
         exist_ok=False,  # existing project/name ok, do not increment
         line_thickness=3,  # bounding box thickness (pixels)
@@ -56,11 +107,20 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
         hide_conf=False,  # hide confidences
         half=False,  # use FP16 half-precision inference
         dnn=False,  # use OpenCV DNN for ONNX inference
+        sort_max_age=5,
+        sort_min_hits=2,
+        sort_iou_thresh=0.2,
         ):
+
     source = str(source)
     save_img = not nosave and not source.endswith('.txt')  # save inference images
     webcam = source.isnumeric() or source.endswith('.txt') or source.lower().startswith(
         ('rtsp://', 'rtmp://', 'http://', 'https://'))
+
+    # Initialize SORT
+    sort_tracker = Sort(max_age=sort_max_age,
+                       min_hits=sort_min_hits,
+                       iou_threshold=sort_iou_thresh) # {plug into parser}
 
     # Directories
     save_dir = increment_path(Path(project) / name, exist_ok=exist_ok)  # increment run
@@ -130,6 +190,7 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
     if pt and device.type != 'cpu':
         model(torch.zeros(1, 3, *imgsz).to(device).type_as(next(model.parameters())))  # run once
     dt, seen = [0.0, 0.0, 0.0], 0
+
     for path, img, im0s, vid_cap, s in dataset:
         t1 = time_sync()
         if onnx:
@@ -211,6 +272,14 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
                     n = (det[:, -1] == c).sum()  # detections per class
                     s += f"{n} {names[int(c)]}{'s' * (n > 1)}, "  # add to string
 
+                # Pass detections to SORT
+                dets_to_sort = np.empty((0,6))
+                for x1,y1,x2,y2,conf,detclass in det.cpu().detach().numpy():
+                    dets_to_sort = np.vstack((dets_to_sort, np.array([x1, y1, x2, y2, conf, detclass])))
+
+                # Run SORT
+                tracked_dets = sort_tracker.update(dets_to_sort)
+
                 # Write results
                 for *xyxy, conf, cls in reversed(det):
                     if save_txt:  # Write to file
@@ -222,7 +291,14 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
                     if save_img or save_crop or view_img:  # Add bbox to image
                         c = int(cls)  # integer class
                         label = None if hide_labels else (names[c] if hide_conf else f'{names[c]} {conf:.2f}')
-                        annotator.box_label(xyxy, label, color=colors(c, True))
+
+                        # Draw boxes for visualization
+                        bbox_xyxy = tracked_dets[:,:4]
+                        categories = tracked_dets[:, 4]
+                        color=colors(c, True)
+                        draw_boxes(im0, bbox_xyxy, categories, names, color, conf)
+
+                        # annotator.box_label(xyxy, label, color=colors(c, True))
                         if save_crop:
                             save_one_box(xyxy, imc, file=save_dir / 'crops' / names[c] / f'{p.stem}.jpg', BGR=True)
 
@@ -235,9 +311,9 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
             fps = str(int(1/time_total))
 
             # Stream results
-            im0 = annotator.result()
             if view_img:
                 font = cv2.FONT_HERSHEY_SIMPLEX
+                fps = str(int(1/(t3 - t2)))
                 cv2.putText(im0, fps, (5, 50), font, 2, (100, 255, 0), 2, cv2.LINE_AA)
                 cv2.imshow(str(p), im0)
                 cv2.waitKey(1)  # 1 millisecond
@@ -294,7 +370,7 @@ def parse_opt():
     parser.add_argument('--augment', action='store_true', help='augmented inference')
     parser.add_argument('--visualize', action='store_true', help='visualize features')
     parser.add_argument('--update', action='store_true', help='update all models')
-    parser.add_argument('--project', default=ROOT / 'runs/detect', help='save results to project/name')
+    parser.add_argument('--project', default=ROOT / 'runs/track', help='save results to project/name')
     parser.add_argument('--name', default='exp', help='save results to project/name')
     parser.add_argument('--exist-ok', action='store_true', help='existing project/name ok, do not increment')
     parser.add_argument('--line-thickness', default=3, type=int, help='bounding box thickness (pixels)')
@@ -302,16 +378,20 @@ def parse_opt():
     parser.add_argument('--hide-conf', default=False, action='store_true', help='hide confidences')
     parser.add_argument('--half', action='store_true', help='use FP16 half-precision inference')
     parser.add_argument('--dnn', action='store_true', help='use OpenCV DNN for ONNX inference')
+
+    # SORT params
+    parser.add_argument('--sort-max-age', type=int, default=5,help='keep track of object even if object is occluded or not detected in n frames')
+    parser.add_argument('--sort-min-hits', type=int, default=2,help='start tracking only after n number of objects detected')
+    parser.add_argument('--sort-iou-thresh', type=float, default=0.2,help='intersection-over-union threshold between two frames for association')
+
     opt = parser.parse_args()
     opt.imgsz *= 2 if len(opt.imgsz) == 1 else 1  # expand
     print_args(FILE.stem, opt)
     return opt
 
-
 def main(opt):
     check_requirements(exclude=('tensorboard', 'thop'))
     run(**vars(opt))
-
 
 if __name__ == "__main__":
     opt = parse_opt()

@@ -1,7 +1,7 @@
 import cv2
 
-
-video = 'Justin_0.mp4'
+path = "images/"
+video = 'Justin_3.mp4'
 
 vidcap = cv2.VideoCapture(video)
 
@@ -9,7 +9,7 @@ def getFrame(sec):
     vidcap.set(cv2.CAP_PROP_POS_MSEC,sec*1000)
     hasFrames,image = vidcap.read()
     if hasFrames:
-        cv2.imwrite("image" + str(count) + ".jpg", image)     # save frame as JPG file
+        cv2.imwrite(path + "image" + str(count) + ".jpg", image)     # save frame as JPG file
     return hasFrames
 
 sec = 0

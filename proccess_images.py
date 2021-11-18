@@ -22,8 +22,8 @@ def main():
     resize = "resize_images"
 
     # Program does not work on .HEIC files
-    # rename_dir(name, images)       // Will replace the original file name
-    # resize_dir(name, images, resize)
+    #rename_dir(name, images)       # Will replace the original file name
+    #resize_dir(name, images, resize)
 
 if __name__ == "__main__":
     main()
